@@ -6,7 +6,7 @@ public class Gate : MonoBehaviour
 {
     public float[] MarbleTimes { get; private set; }
 
-    private void OnEnable()
+    private void Start() // thios will ahve to be on enable or called some other way
     {
          MarbleTimes = new float[GameController.Marbles.Count];
     }

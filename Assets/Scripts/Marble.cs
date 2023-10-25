@@ -11,4 +11,9 @@ public class Marble : MonoBehaviour
         MarbleIndex = GameController.Join(this);
         State = MarbleState.Setup;
     }
+    private void OnDestroy()
+    {
+        if (GameController.Marbles.Contains(this))
+            GameController.RemoveMarble(this);
+    }
 }
