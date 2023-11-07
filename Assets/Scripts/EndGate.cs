@@ -8,7 +8,7 @@ public class EndGate : Gate
     {
         if (other.gameObject.TryGetComponent<Marble>(out Marble m) && GameController.Marbles.Contains(m))
         {
-            MarbleTimes[GameController.Marbles.IndexOf(m)] = Time.time - GameController.RaceStartTime;
+            MarbleTimes[GameController.Marbles.IndexOf(m)] = GameController.RaceTime;
             m.State = Marble.MarbleState.Finished;
         }
 

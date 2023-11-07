@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public enum State {Setup, Race, Finish }
@@ -9,11 +11,12 @@ public class GameController : MonoBehaviour
     public static List<Marble> Marbles { get; private set; } = new List<Marble>();
 
     public static Marble PlayerMarble;
-    public static float RaceStartTime { get; private set; } = -10;
+    public static float RaceTime { get; private set; } = -10;
 
     public static State GameState = State.Setup;
 
     [SerializeField] GameObject _arrowPrefab;
+    [SerializeField] TextMeshProUGUI _guiTimer;
     GameObject _arrow;
     [SerializeField] GameObject _marblePrefab;
     Vector3 _velocityDirection;
@@ -22,11 +25,13 @@ public class GameController : MonoBehaviour
 
     Camera cam;
 
+    public static Action OnRaceStart;
+
+
+
     public static int Join(Marble newMarble)
     {
         Marbles.Add(newMarble);
-        if (RaceStartTime == 0) // need to trigger this on start of race but for now this works
-            RaceStartTime = Time.time;
         return Marbles.IndexOf(newMarble);
     }
 
@@ -39,6 +44,7 @@ public class GameController : MonoBehaviour
             rB.isKinematic = false;
             rB.AddForce(-_velocityDirection*200);
         }
+        OnRaceStart?.Invoke();
     }
 
     public static void RemoveMarble(Marble m)
@@ -59,7 +65,7 @@ public class GameController : MonoBehaviour
 
     private void Update()
     {
-        RaceStartTime += Time.deltaTime;
+        RaceTime += Time.deltaTime;
         if (GameState == State.Setup)
         {
             if (Input.GetMouseButtonDown(0) && !_spawning)
@@ -75,12 +81,15 @@ public class GameController : MonoBehaviour
                 _arrow.transform.eulerAngles = new Vector3(0, 0, Vector2.SignedAngle(Vector2.up, new Vector2(_velocityDirection.x, _velocityDirection.y)));
                 _arrow.transform.position = PlayerMarble.transform.position + (_velocityDirection / 2);
             }
-            if (!(RaceStartTime < 0))
+            if (!(RaceTime < 0))
             {
                 StartRace();
                 GameState = State.Race;
             }
         }
+        _guiTimer.text = MathF.Abs(RaceTime - (RaceTime % 1)) + ":" + MathF.Abs((int)((RaceTime % 1)*100));
+        if (RaceTime < 0)
+            _guiTimer.text = "-" + _guiTimer.text;
     }
 
     private IEnumerator SpawnMarble()
@@ -89,8 +98,8 @@ public class GameController : MonoBehaviour
         _spawning = true;
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        LayerMask mask = ~0;
-        if (Physics.Raycast(ray, out hit))
+        LayerMask mask = LayerMask.GetMask("Default");
+        if (Physics.Raycast(ray, out hit, 200,mask))
         {
             Debug.Log("Ray Hit on spawn location");
             // spawn marble
