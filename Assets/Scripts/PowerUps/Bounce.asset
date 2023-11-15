@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c293db9b88de70440bde6ecdc7359a48, type: 3}
+  m_Name: Bounce
+  m_EditorClassIdentifier: 
+  icon: {fileID: 21300000, guid: 441cc3fb412d371498af67c9977d8e11, type: 3}
+  _bouncyMat: {fileID: 13400000, guid: 63424c5d62e4b4141aa0716d2db90bf3, type: 2}
