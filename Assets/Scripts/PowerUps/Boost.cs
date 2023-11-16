@@ -11,6 +11,10 @@ public class Boost : BasePowerUp
         {
             rb.velocity *= 2;
         }
+        if (target == GameController.PlayerMarble)
+        {
+            UIText.DisplayText("BOOSTED!");
+        }
     }
 }
 

@@ -18,6 +18,10 @@ public class Bounce : BasePowerUp
             RemoveBounce(c, 5, c.material);
             c.material = _bouncyMat;
         }
+        if (target == GameController.PlayerMarble)
+        {
+            UIText.DisplayText("BOUNCY!");
+        }
     }
 
     async void RemoveBounce(Collider target, float effectTime, PhysicMaterial oldMat)

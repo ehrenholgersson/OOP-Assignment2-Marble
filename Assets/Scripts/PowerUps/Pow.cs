@@ -21,5 +21,9 @@ public class Pow : BasePowerUp
                 }
             }
         }
+        if (target == GameController.PlayerMarble)
+        {
+            UIText.DisplayText("POW!");
+        }
     }
 }

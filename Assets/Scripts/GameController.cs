@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum State {Setup, Race, Finish }
 
@@ -16,11 +17,13 @@ public class GameController : MonoBehaviour
     public static State GameState = State.Setup;
     public List<Color> NPCColors;
 
-    [SerializeField] GameObject _arrowPrefab;
+    //[SerializeField] GameObject _arrowPrefab;
     [SerializeField] TextMeshProUGUI _guiTimer;
-    GameObject _arrow;
+    //GameObject _arrowOld;
+    [SerializeField] Image _arrow;
     [SerializeField] GameObject _marblePrefab;
     Vector3 _velocityDirection;
+    Vector2 _canvasSize = new Vector2(1920, 1080);
     public static GameController Instance { get; private set; }
     bool _spawning = false;
 
@@ -45,6 +48,7 @@ public class GameController : MonoBehaviour
             rB.isKinematic = false;
             rB.AddForce(-_velocityDirection*200);
         }
+        _arrow.gameObject.SetActive(false);
         OnRaceStart?.Invoke();
     }
 
@@ -77,25 +81,30 @@ public class GameController : MonoBehaviour
             }
             else if (Input.GetMouseButtonDown(0))
                 Debug.Log("Broken");
-            if (_arrow!=null)
-            {
-                _arrow.transform.localScale = new Vector3(1, _velocityDirection.magnitude, 1);
-                _arrow.transform.eulerAngles = new Vector3(0, 0, Vector2.SignedAngle(Vector2.up, new Vector2(_velocityDirection.x, _velocityDirection.y)));
-                _arrow.transform.position = PlayerMarble.transform.position + (_velocityDirection / 2);
-            }
+            //if (_arrowOld!=null)
+            //{
+            //    _arrowOld.transform.localScale = new Vector3(1, _velocityDirection.magnitude, 1);
+            //    _arrowOld.transform.eulerAngles = new Vector3(0, 0, Vector2.SignedAngle(Vector2.up, new Vector2(_velocityDirection.x, _velocityDirection.y)));
+            //    _arrowOld.transform.position = PlayerMarble.transform.position + (_velocityDirection / 2);
+            //}
             if (!(RaceTime < 0))
             {
                 StartRace();
                 GameState = State.Race;
             }
         }
-        _guiTimer.text = MathF.Abs(RaceTime - (RaceTime % 1)) + ":" + MathF.Abs((int)((RaceTime % 1)*100));
-        if (RaceTime < 0)
-            _guiTimer.text = "-" + _guiTimer.text;
+        if (PlayerMarble ==null || PlayerMarble.State != Marble.MarbleState.Finished)
+        {
+            _guiTimer.text = MathF.Abs(RaceTime - (RaceTime % 1)) + ":" + MathF.Abs((int)((RaceTime % 1) * 100));
+            if (RaceTime < 0)
+                _guiTimer.text = "-" + _guiTimer.text;
+        }
     }
 
     private IEnumerator SpawnMarble()
     {
+        Vector2 arrowStart;
+        Vector2 arrowEnd;
         Debug.Log("spawn new Player Marble");
         _spawning = true;
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
@@ -108,18 +117,27 @@ public class GameController : MonoBehaviour
             if (PlayerMarble != null)
             {
                 Destroy(PlayerMarble.gameObject);
-                Destroy(_arrow);
+                //Destroy(_arrowOld);
             }
             GameObject gO = Instantiate(_marblePrefab);
             PlayerMarble = gO.GetComponent<Marble>();
             gO.transform.position = hit.point - new Vector3(0, 0, 0.5f); // pull back from impact point by width of marble
-            _arrow = Instantiate(_arrowPrefab);
+            //_arrowOld = Instantiate(_arrowPrefab);
+            _arrow.gameObject.SetActive(true);
+            arrowStart = cam.WorldToScreenPoint(PlayerMarble.transform.position);// * (_canvasSize.x/ Screen.currentResolution.width);// don't think this would work outside of 16:9!!
+            arrowEnd = arrowStart;
 
             while (Input.GetMouseButton(0))
             {
                 ray = cam.ScreenPointToRay(Input.mousePosition);
                 if (Physics.Raycast(ray, out hit))
-                    _velocityDirection = hit.point - PlayerMarble.transform.position ;
+                {
+                    _velocityDirection = hit.point - PlayerMarble.transform.position;
+                    arrowEnd = Input.mousePosition;
+                }
+                _arrow.rectTransform.position = (arrowStart + arrowEnd) / 2;
+                _arrow.rectTransform.localScale = new Vector3(_arrow.rectTransform.localScale.x, (arrowStart - arrowEnd).magnitude / _arrow.rectTransform.rect.height, _arrow.rectTransform.localScale.z);
+                _arrow.rectTransform.localRotation = Quaternion.Euler(0, 0, Vector2.SignedAngle(Vector2.up, (arrowStart - arrowEnd)));
                 Debug.Log("update direction: " + _velocityDirection);
                 //update velocity vector and draw arrow indicator
                 yield return new WaitForEndOfFrame();
