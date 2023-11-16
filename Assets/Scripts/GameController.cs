@@ -14,6 +14,7 @@ public class GameController : MonoBehaviour
     public static float RaceTime { get; private set; } = -10;
 
     public static State GameState = State.Setup;
+    public List<Color> NPCColors;
 
     [SerializeField] GameObject _arrowPrefab;
     [SerializeField] TextMeshProUGUI _guiTimer;
@@ -53,12 +54,12 @@ public class GameController : MonoBehaviour
             GameController.Marbles.Remove(m);
     }
 
-    private void Start()
+    private void Awake()
     {
         Application.targetFrameRate = 60;
         if (Instance == null)
             Instance = this;
-        else
+        else if (Instance != this)
             Destroy(this);
 
         cam = Camera.main;
