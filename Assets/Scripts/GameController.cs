@@ -124,7 +124,7 @@ public class GameController : MonoBehaviour
             gO.transform.position = hit.point - new Vector3(0, 0, 0.5f); // pull back from impact point by width of marble
             //_arrowOld = Instantiate(_arrowPrefab);
             _arrow.gameObject.SetActive(true);
-            arrowStart = cam.WorldToScreenPoint(PlayerMarble.transform.position);// * (_canvasSize.x/ Screen.currentResolution.width);// don't think this would work outside of 16:9!!
+            arrowStart = cam.WorldToScreenPoint(PlayerMarble.transform.position);// * (Screen.currentResolution.width/_canvasSize.x);// don't think this would work outside of 16:9!!
             arrowEnd = arrowStart;
 
             while (Input.GetMouseButton(0))
@@ -136,7 +136,7 @@ public class GameController : MonoBehaviour
                     arrowEnd = Input.mousePosition;
                 }
                 _arrow.rectTransform.position = (arrowStart + arrowEnd) / 2;
-                _arrow.rectTransform.localScale = new Vector3(_arrow.rectTransform.localScale.x, (arrowStart - arrowEnd).magnitude / _arrow.rectTransform.rect.height, _arrow.rectTransform.localScale.z);
+                _arrow.rectTransform.localScale = new Vector3(_arrow.rectTransform.localScale.x, (arrowStart - arrowEnd).magnitude / _arrow.rectTransform.rect.height * (_canvasSize.x/ Screen.width), _arrow.rectTransform.localScale.z);
                 _arrow.rectTransform.localRotation = Quaternion.Euler(0, 0, Vector2.SignedAngle(Vector2.up, (arrowStart - arrowEnd)));
                 Debug.Log("update direction: " + _velocityDirection);
                 //update velocity vector and draw arrow indicator
