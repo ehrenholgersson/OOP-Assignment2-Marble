@@ -19,4 +19,8 @@ public class CameraControl : MonoBehaviour // Object for Cinemachine camera to f
             transform.SetParent(GameController.PlayerMarble.transform, true);
         }
     }
+    private void OnDestroy()
+    {
+        GameController.OnRaceStart -= AttachCamera;
+    }
 }

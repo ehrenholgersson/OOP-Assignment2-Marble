@@ -26,4 +26,9 @@ public class Gate : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        GameController.OnRaceStart -= Setup;
+    }
+
 }

@@ -31,8 +31,11 @@ public class Bounce : BasePowerUp
         {
             await Task.Delay(500);
         }
-        Debug.Log(target.gameObject.name + " has been de-bounced");
-        target.material = oldMat;
+        if (target != null) // make sure marble not destroyed while we waited
+        {
+            Debug.Log(target.gameObject.name + " has been de-bounced");
+            target.material = oldMat;
+        }
     }
     
 

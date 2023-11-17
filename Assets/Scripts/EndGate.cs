@@ -40,6 +40,7 @@ public class EndGate : Gate
                         UIText.DisplayText("you came " + position + "th");
                         break;
                 }
+                GameController.Instance.DelayedMenu(5);
             }
         }
 

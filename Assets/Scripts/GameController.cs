@@ -1,8 +1,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public enum State {Setup, Race, Finish }
@@ -10,29 +12,26 @@ public enum State {Setup, Race, Finish }
 public class GameController : MonoBehaviour
 {
     public static List<Marble> Marbles { get; private set; } = new List<Marble>();
-
     public static Marble PlayerMarble;
     public static float RaceTime { get; private set; } = -10;
-
     public static State GameState = State.Setup;
-    public List<Color> NPCColors;
+    public static Action OnRaceStart;
+    public static GameController Instance { get; private set; }
+    static bool _restart = false;
 
-    //[SerializeField] GameObject _arrowPrefab;
     [SerializeField] TextMeshProUGUI _guiTimer;
-    //GameObject _arrowOld;
     [SerializeField] Image _arrow;
     [SerializeField] GameObject _marblePrefab;
+    [SerializeField] GameObject _menu;
+
+    public List<Color> NPCColors;
+
     Vector3 _velocityDirection;
     Vector2 _canvasSize = new Vector2(1920, 1080);
-    public static GameController Instance { get; private set; }
     bool _spawning = false;
-
     Camera cam;
-
-    public static Action OnRaceStart;
-
-
-
+    List<DNFTimer> _dNFTimers = new List<DNFTimer>();
+    
     public static int Join(Marble newMarble)
     {
         Marbles.Add(newMarble);
@@ -50,12 +49,31 @@ public class GameController : MonoBehaviour
         }
         _arrow.gameObject.SetActive(false);
         OnRaceStart?.Invoke();
+        _dNFTimers.Add(new DNFTimer(5, Marble.MarbleState.Setup));
+        _dNFTimers.Add(new DNFTimer(45, Marble.MarbleState.Racing));
     }
 
     public static void RemoveMarble(Marble m)
     {
         if (GameController.Marbles.Contains(m))
             GameController.Marbles.Remove(m);
+    }
+
+    public async void DelayedMenu(int seconds)
+    {
+        await Task.Delay(seconds*1000);
+        if (_menu != null && !_menu.activeSelf) 
+            ToggleMenu();
+    }
+
+    private void Start()
+    {
+        if (!_restart)
+            ToggleMenu();
+        else
+            Time.timeScale = 1;
+
+        _restart = false;
     }
 
     private void Awake()
@@ -69,8 +87,24 @@ public class GameController : MonoBehaviour
         cam = Camera.main;
     }
 
+    private void Reload()
+    {
+        _restart = true;
+        Marbles.Clear();
+        PlayerMarble = null;
+        RaceTime = -10;
+        GameState = State.Setup;
+        foreach (DNFTimer t in _dNFTimers)
+            t.Stop();
+        SceneManager.LoadScene(0);
+    }
+
     private void Update()
     {
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ToggleMenu();
+        }
         RaceTime += Time.deltaTime;
         if (GameState == State.Setup)
         {
@@ -81,12 +115,7 @@ public class GameController : MonoBehaviour
             }
             else if (Input.GetMouseButtonDown(0))
                 Debug.Log("Broken");
-            //if (_arrowOld!=null)
-            //{
-            //    _arrowOld.transform.localScale = new Vector3(1, _velocityDirection.magnitude, 1);
-            //    _arrowOld.transform.eulerAngles = new Vector3(0, 0, Vector2.SignedAngle(Vector2.up, new Vector2(_velocityDirection.x, _velocityDirection.y)));
-            //    _arrowOld.transform.position = PlayerMarble.transform.position + (_velocityDirection / 2);
-            //}
+
             if (!(RaceTime < 0))
             {
                 StartRace();
@@ -101,6 +130,42 @@ public class GameController : MonoBehaviour
         }
     }
 
+    void ToggleMenu()
+    {
+        if (_menu.activeSelf)
+        {
+            _menu.SetActive(false);
+            Time.timeScale = 1;
+        }
+        else
+        {
+            _menu.SetActive(true);
+            Time.timeScale = 0;
+            if (GameState!= State.Setup)
+            {
+                _menu.transform.Find("Start").GetComponentInChildren<TextMeshProUGUI>().text = "Restart"; //that is not the best way to do that!
+            }
+        }
+    }
+
+    public void StartButton()
+    {
+        if (GameState == State.Setup)
+        {
+            ToggleMenu();
+            UIText.DisplayText("Click and drag in green area <br> to set marble");
+        }
+        else
+        {
+            Reload();
+        }
+    }
+
+    public void QuitButton()
+    {
+        Application.Quit();
+    }
+
     private IEnumerator SpawnMarble()
     {
         Vector2 arrowStart;
@@ -109,8 +174,8 @@ public class GameController : MonoBehaviour
         _spawning = true;
         Ray ray = cam.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        LayerMask mask = LayerMask.GetMask("Default");
-        if (Physics.Raycast(ray, out hit, 200,mask))
+        LayerMask mask = LayerMask.GetMask("StartZone");// + LayerMask.GetMask("UI");
+        if (Physics.Raycast(ray, out hit, 200,mask)&& !_menu.activeSelf) // We still ray to hit the button so we don't spawn marble when clicking "Start"
         {
             Debug.Log("Ray Hit on spawn location");
             // spawn marble
